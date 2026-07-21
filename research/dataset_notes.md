@@ -11,7 +11,7 @@ It should answer:
 - which categories are being used
 - how the data is distributed
 - whether the data contains quality problems
-- how the `out_of_scope` category will be constructed
+- whether an `out_of_scope` category will be added in a later version
 - how training, validation, and test data will be created
 - what limitations may affect the final evaluation
 
@@ -58,7 +58,14 @@ The actual field names and label representation must be confirmed during dataset
 
 ### Current inspection status
 
-Not yet inspected locally.
+Inspected locally in `notebooks/01_dataset_exploration.ipynb`.
+
+Confirmed:
+
+- the dataset contains `train` and `test` splits
+- records contain `text` and integer `label` fields
+- the `label` feature contains ClassLabel metadata with readable intent names
+- the current selected-intent filter has been explored in the notebook
 
 ---
 
@@ -145,7 +152,7 @@ wrong_amount_of_cash_received
 
 ## 5. Selected supported intents
 
-Version 1 of BankAssist Triage will directly support the following ten BANKING77 intents:
+Version 1 of BankAssist Triage will directly support the following nine BANKING77 intents:
 
 1. `lost_or_stolen_card`
 2. `compromised_card`
@@ -153,16 +160,9 @@ Version 1 of BankAssist Triage will directly support the following ten BANKING77
 4. `cash_withdrawal_not_recognised`
 5. `wrong_amount_of_cash_received`
 6. `transfer_not_received_by_recipient`
-7. `refund_not_showing_up`
-8. `declined_card_payment`
-9. `card_not_working`
-10. `change_pin`
-
-The project will also contain one additional project-specific category:
-
-11. `out_of_scope`
-
-The `out_of_scope` category will represent banking messages that do not belong to the ten supported intents.
+7. `declined_card_payment`
+8. `card_not_working`
+9. `change_pin`
 
 ---
 
@@ -175,7 +175,6 @@ The selected intents provide a mixture of:
 - card-support requests
 - ATM disputes
 - transfer problems
-- refund problems
 - low-risk self-service requests
 
 They also provide different levels of classification difficulty.
@@ -202,7 +201,6 @@ The following categories involve delayed, missing, or incorrect transactions:
 
 - `wrong_amount_of_cash_received`
 - `transfer_not_received_by_recipient`
-- `refund_not_showing_up`
 
 These selected categories will help determine whether the model understands the meaning of a message rather than relying only on obvious keywords.
 
@@ -220,11 +218,9 @@ The project will attach the following business rules to each intent:
 | `cash_withdrawal_not_recognised` | critical | `fraud_team` | true |
 | `wrong_amount_of_cash_received` | high | `atm_disputes` | true |
 | `transfer_not_received_by_recipient` | high | `transfers_team` | true |
-| `refund_not_showing_up` | medium | `payments_team` | false |
 | `declined_card_payment` | medium | `card_support` | false |
 | `card_not_working` | medium | `card_support` | false |
 | `change_pin` | low | `self_service` | false |
-| `out_of_scope` | medium | `human_review` | true |
 
 These mappings are simulated business rules created for this project.
 
@@ -234,46 +230,9 @@ They do not represent the real operational policies of a particular bank.
 
 ## 8. Out-of-scope construction strategy
 
-The project directly supports only ten of the original BANKING77 intents.
+Out-of-scope handling is deferred for the current preprocessing pass.
 
-Examples belonging to selected unsupported BANKING77 categories will be relabelled as:
-
-```text
-out_of_scope
-```
-
-The purpose is to teach the model that a message can be related to banking while still falling outside the authorised scope of Version 1.
-
-### Example
-
-```text
-Which currencies can I use with my account?
-```
-
-This may be a valid banking question, but it does not belong to one of the ten supported categories.
-
-The expected project output would therefore be:
-
-```json
-{
-  "intent": "out_of_scope",
-  "priority": "medium",
-  "route": "human_review",
-  "requires_human_review": true
-}
-```
-
-### Rules for constructing the out-of-scope class
-
-The `out_of_scope` class should:
-
-- contain genuine banking-related questions
-- contain examples from several excluded intents
-- not be dominated by one excluded intent
-- be approximately balanced with the supported classes
-- contain both easy and difficult unsupported requests
-- avoid relying mainly on unrelated questions
-- remain separated across training, validation, and test sets
+The active Version 1 dataset uses only the nine selected BANKING77 intents listed above. A future version may add `out_of_scope`, but that should be designed as a separate dataset version so baseline, SFT training, and evaluation remain comparable.
 
 ### Why random unrelated messages are insufficient
 
@@ -361,23 +320,31 @@ The exact counts will be recorded after the dataset is inspected.
 
 ## 11. Class distribution
 
-This section will be completed after loading and inspecting the dataset.
+The current selected-intent dataset was created by running:
+
+```text
+conda run -n bankassist env PYTHONPATH=src python -m bankassist.data.preprocess
+```
+
+The enriched dataset was saved locally to:
+
+```text
+data/processed/business-labelled-v1
+```
 
 ### Selected intent counts
 
 | Intent | Official train count | Official test count | Total |
 |---|---:|---:|---:|
-| `lost_or_stolen_card` | Pending | Pending | Pending |
-| `compromised_card` | Pending | Pending | Pending |
-| `card_payment_not_recognised` | Pending | Pending | Pending |
-| `cash_withdrawal_not_recognised` | Pending | Pending | Pending |
-| `wrong_amount_of_cash_received` | Pending | Pending | Pending |
-| `transfer_not_received_by_recipient` | Pending | Pending | Pending |
-| `refund_not_showing_up` | Pending | Pending | Pending |
-| `declined_card_payment` | Pending | Pending | Pending |
-| `card_not_working` | Pending | Pending | Pending |
-| `change_pin` | Pending | Pending | Pending |
-| `out_of_scope` | To be constructed | To be constructed | Pending |
+| `lost_or_stolen_card` | 82 | 40 | 122 |
+| `compromised_card` | 86 | 40 | 126 |
+| `card_payment_not_recognised` | 168 | 40 | 208 |
+| `cash_withdrawal_not_recognised` | 160 | 40 | 200 |
+| `wrong_amount_of_cash_received` | 180 | 40 | 220 |
+| `transfer_not_received_by_recipient` | 171 | 40 | 211 |
+| `declined_card_payment` | 153 | 40 | 193 |
+| `card_not_working` | 112 | 40 | 152 |
+| `change_pin` | 122 | 40 | 162 |
 
 ### Questions to answer
 
@@ -385,12 +352,12 @@ This section will be completed after loading and inspecting the dataset.
 - Which intent has the most examples?
 - Which intent has the fewest examples?
 - Is resampling necessary?
-- How many out-of-scope examples should be selected?
-- Does one excluded category dominate the out-of-scope class?
 
 ### Current findings
 
-Pending dataset exploration.
+The official test split is balanced for the nine selected intents, with 40 examples per intent.
+
+The selected official training subset is moderately imbalanced. `wrong_amount_of_cash_received` has the most training examples with 180, while `lost_or_stolen_card` has the fewest with 82. This does not need to be fixed before enrichment, but it should be considered during train/validation splitting and evaluation.
 
 ---
 
@@ -836,13 +803,13 @@ The following decisions must be fixed and documented before creating the final d
 
 | Decision | Value |
 |---|---|
-| Supported intents | 10 |
-| Additional project intent | `out_of_scope` |
+| Supported intents | 9 |
+| Additional project intent | None in current preprocessing pass |
 | Validation percentage | 15% of selected official training data |
 | Final test source | Official BANKING77 test split |
 | Random seed | Pending |
-| Out-of-scope sample size | Pending |
-| Out-of-scope source strategy | Multiple excluded banking intents |
+| Out-of-scope sample size | Deferred |
+| Out-of-scope source strategy | Deferred |
 | Duplicate policy | Pending inspection |
 
 ---
@@ -885,15 +852,19 @@ This section will be completed at the end of the dataset exploration and prepara
 
 ### Final selected intents
 
-Pending confirmation after inspection.
+Confirmed as the nine intents listed in Section 5.
 
 ### Final out-of-scope source categories
 
-Pending inspection.
+Deferred.
 
 ### Final class sizes
 
-Pending inspection.
+Current enriched dataset size:
+
+- train: 1,234 records
+- test: 360 records
+- total: 1,594 records
 
 ### Final duplicate policy
 
@@ -905,7 +876,7 @@ Pending creation.
 
 ### Final test split
 
-Pending creation.
+Created from the official BANKING77 test split for the nine selected intents.
 
 ### Final cleaning rules
 
@@ -929,8 +900,10 @@ Status: Completed
 
 ### Phase 2 — Dataset exploration
 
-Status: Not started
+Status: In progress
 
-The next task will be to inspect BANKING77 using a dataset-exploration notebook.
+BANKING77 has been inspected enough to confirm schema, label metadata, selected intents, filtering logic, and class counts.
 
-No dataset has yet been downloaded, transformed, tokenised, or split.
+The preprocessing pipeline now filters the selected intents, derives readable intent names from ClassLabel metadata, adds business-rule fields, preserves the original integer label, and saves the enriched dataset to `data/processed/business-labelled-v1`.
+
+Deeper quality checks, including duplicate review, message-length analysis, and ambiguous-example review, remain pending.

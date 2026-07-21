@@ -156,7 +156,7 @@ Allowed values:
 
 ## 9. Supported intents
 
-Version 1 will support the following ten banking intents:
+Version 1 will support the following nine banking intents:
 
 1. `lost_or_stolen_card`
 2. `compromised_card`
@@ -164,16 +164,9 @@ Version 1 will support the following ten banking intents:
 4. `cash_withdrawal_not_recognised`
 5. `wrong_amount_of_cash_received`
 6. `transfer_not_received_by_recipient`
-7. `refund_not_showing_up`
-8. `declined_card_payment`
-9. `card_not_working`
-10. `change_pin`
-
-The project will also include:
-
-11. `out_of_scope`
-
-The `out_of_scope` category will represent banking questions that do not belong to the ten supported categories.
+7. `declined_card_payment`
+8. `card_not_working`
+9. `change_pin`
 
 ---
 
@@ -187,11 +180,9 @@ The `out_of_scope` category will represent banking questions that do not belong 
 | `cash_withdrawal_not_recognised` | critical | `fraud_team` | true |
 | `wrong_amount_of_cash_received` | high | `atm_disputes` | true |
 | `transfer_not_received_by_recipient` | high | `transfers_team` | true |
-| `refund_not_showing_up` | medium | `payments_team` | false |
 | `declined_card_payment` | medium | `card_support` | false |
 | `card_not_working` | medium | `card_support` | false |
 | `change_pin` | low | `self_service` | false |
-| `out_of_scope` | medium | `human_review` | true |
 
 These rules are simulated project assumptions.
 
@@ -211,10 +202,9 @@ BANKING77 contains short English-language banking customer-support messages labe
 
 The original dataset contains 77 banking intents.
 
-For Version 1:
+For the current Version 1 preprocessing pass:
 
-- ten original intents will be directly supported
-- examples from selected unsupported intents will be relabelled as `out_of_scope`
+- nine original intents will be directly supported
 - the official test split will be preserved for final evaluation
 - part of the official training split will be used for validation
 
@@ -404,8 +394,7 @@ Version 1 will include:
 
 - English-language messages
 - one customer message at a time
-- ten supported banking intents
-- one `out_of_scope` category
+- nine supported banking intents
 - structured JSON output
 - local model inference
 - supervised fine-tuning
